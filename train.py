@@ -199,7 +199,7 @@ def main(argv=None):
                 tr_img_pb = sess.run(tr_img_summary_op, {img_summary_pl: tr_img_summary})
                 fw.add_summary(tr_img_pb, tr_ix)
 
-            if tr_ix == 0 or wrap :
+            if wrap :
                 val_wrap = False
                 losses = []
                 accuracies = []
