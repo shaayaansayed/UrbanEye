@@ -9,21 +9,25 @@ class DataLoader :
     def __init__(self, data_dir, im_csz, val_split=0.15) :
         self.im_csz = im_csz
         
-        sat_paths = glob.glob(os.path.join(data_dir, 'satellite', '*'))
-        label_paths = glob.glob(os.path.join(data_dir, 'labels', '*'))
-        combined = list(zip(sat_paths, label_paths))
-        random.shuffle(combined)
-        sat_paths, label_paths = zip(*combined)
+        if val_split > 0 :
+            sat_paths = glob.glob(os.path.join(data_dir, 'satellite', '*'))
+            label_paths = glob.glob(os.path.join(data_dir, 'labels', '*'))
+            combined = list(zip(sat_paths, label_paths))
+            random.shuffle(combined)
+            sat_paths, label_paths = zip(*combined)
 
-        num_val = int(len(sat_paths)*val_split)
-        self.val_sat = sat_paths[:num_val]
-        self.val_label = label_paths[:num_val]
-        self.train_sat = sat_paths[num_val:]
-        self.train_label = label_paths[num_val:]
+            num_val = int(len(sat_paths)*val_split)
+            self.val_sat = sat_paths[:num_val]
+            self.val_label = label_paths[:num_val]
+            self.train_sat = sat_paths[num_val:]
+            self.train_label = label_paths[num_val:]
 
-        print('{} - train, {} - val'.format(len(self.train_sat), len(self.val_sat)))
-        self.train_ix = 0
-        self.val_ix = 0 
+            print('{} - train, {} - val'.format(len(self.train_sat), len(self.val_sat)))
+            self.train_ix = 0
+            self.val_ix = 0
+        else :
+            self.test_sat = glob.glob(os.path.join(data_dir, '*.jpg'))
+            self.test_ix = 0 
 
     def next_train_batch(self, batch_size) :
         inputs = np.zeros((batch_size, self.im_csz, self.im_csz, 3))
@@ -83,3 +87,27 @@ class DataLoader :
             self.val_ix = 0 if wrap else self.val_ix + 1
 
         return inputs, targets, wrap, filenames
+
+    def next_test_batch(self, batch_size) :
+        wrap = False
+        if self.test_ix + batch_size >= len(self.test_sat) :
+            batch_size_ = len(self.test_sat) - 1 - self.test_ix + 1
+            wrap = True
+        else :
+            batch_size_ = batch_size
+
+        inputs = np.zeros((batch_size, self.im_csz, self.im_csz, 3))
+
+        c = 15
+        filenames = []
+        for ix in range(batch_size_) :
+            img_path = self.test_sat[self.test_ix]
+            filename = os.path.basename(img_path)
+            I = imread(img_path)
+            I = I[c:c+self.im_csz, c:c+self.im_csz, :]
+            inputs[ix, :, :, :] = I
+
+            filenames.append(filename)
+            self.test_ix = 0 if wrap else self.test_ix + 1
+
+        return inputs, wrap, filenames

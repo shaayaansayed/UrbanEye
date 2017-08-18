@@ -151,7 +151,7 @@ def main(argv=None):
     train_op_decay = train(lr_decay, loss_op, tr_vars) 
 
     img_summary_pl = tf.placeholder(tf.float32, shape=[None, IMAGE_SIZE*2, IMAGE_SIZE*2, 3], name='img_summary_pl')
-    tr_img_summary_op = tf.summary.image('train_image', tr_img_summary_pl, max_outputs=FLAGS.tr_nbatch)
+    tr_img_summary_op = tf.summary.image('train_image', img_summary_pl, max_outputs=FLAGS.tr_nbatch)
     val_img_summary_op = tf.summary.image('val_image', img_summary_pl, max_outputs=FLAGS.val_nbatch)
 
     metrics = ['loss', 'accuracy']
