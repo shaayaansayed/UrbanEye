@@ -253,6 +253,6 @@ def create_test_img_summary(satellite, pred):
     summary = np.zeros((batch_size, h, w*2, num_channels))
     summary[:, :h, :w, :] = satellite
     for ix in range(batch_size) :
-        summary[ix, h:, :w, :] = label2rgb(labels[ix, :, :])*255.
+        summary[ix, :, w:, :] = label2rgb(pred[ix, :, :])*255.
 
     return summary

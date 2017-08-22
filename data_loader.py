@@ -96,18 +96,16 @@ class DataLoader :
         else :
             batch_size_ = batch_size
 
-        inputs = np.zeros((batch_size, self.im_csz, self.im_csz, 3))
+        inputs = np.zeros((batch_size_, self.im_csz, self.im_csz, 3))
 
-        c = 15
         filenames = []
         for ix in range(batch_size_) :
             img_path = self.test_sat[self.test_ix]
             filename = os.path.basename(img_path)
             I = imread(img_path)
-            I = I[c:c+self.im_csz, c:c+self.im_csz, :]
             inputs[ix, :, :, :] = I
 
             filenames.append(filename)
-            self.test_ix = 0 if wrap else self.test_ix + 1
+            self.test_ix = 0 if self.test_ix + 1 >= len(self.test_sat) else self.test_ix + 1
 
         return inputs, wrap, filenames

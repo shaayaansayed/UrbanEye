@@ -20,7 +20,7 @@ tf.flags.DEFINE_float("decay_every", 1, "decay every one epoch")
 tf.flags.DEFINE_integer("log_tr_img_every", 1, "iterations between train image summary logging")
 tf.flags.DEFINE_integer("log_val_img_every", 10, "iterations between train image summary logging")
 tf.flags.DEFINE_integer("save_model_every", 5, "number of epochs for model save")
-tf.flags.DEFINE_string("model_dir", "Model_zoo/", "Path to vgg model mat")
+tf.flags.DEFINE_string("model_dir", '/scratch/cluster/ssayed/nga/Model_zoo', "Path to vgg model mat")
 
 MODEL_URL = 'http://www.vlfeat.org/matconvnet/models/beta16/imagenet-vgg-verydeep-19.mat'
 

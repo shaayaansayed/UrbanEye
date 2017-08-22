@@ -12,7 +12,7 @@ tf.flags.DEFINE_integer("test_nbatch", 2, "batch size for training")
 tf.flags.DEFINE_string("restore_from", "", "path to logs directory")
 tf.flags.DEFINE_string("test_dir", "/scratch/cluster/vsub/ssayed/nga/dataset/", "path to dataset")
 tf.flags.DEFINE_integer("log_test_img_every", 1, "iterations between train image summary logging")
-tf.flags.DEFINE_string("model_dir", "Model_zoo/", "Path to vgg model mat")
+tf.flags.DEFINE_string("model_dir", '/scratch/cluster/ssayed/nga/Model_zoo', "Path to vgg model mat")
 
 MODEL_URL = 'http://www.vlfeat.org/matconvnet/models/beta16/imagenet-vgg-verydeep-19.mat'
 
@@ -126,45 +126,45 @@ def main(argv=None):
     pred_op, logits_op = inference(input_pl, kp_pl)
 
     img_summary_pl = tf.placeholder(tf.float32, shape=[None, IMAGE_SIZE, IMAGE_SIZE*2, 3], name='img_summary_pl')
-    test_img_summary_op = tf.summary.image('test', img_summary_pl, max_outputs=FLAGS.tr_nbatch)
+    test_img_summary_op = tf.summary.image('test', img_summary_pl, max_outputs=FLAGS.test_nbatch)
 
     logdir = os.path.join(FLAGS.test_dir, 'logs')
     if not os.path.isdir(logdir) :
         os.mkdir(logdir)
-        remove = glob.glob(os.path.join(logdir, '*'))
-        for f in remove :
-            os.remove(f)
-    test_dir_base = os.path.basename(FLAGS.test_dir)
+    remove = glob.glob(os.path.join(logdir, '*'))
+    for f in remove :
+        os.remove(f)
+
+    test_dir_base = os.path.basename(os.path.normpath(FLAGS.test_dir))
     output_dir = os.path.join(FLAGS.test_dir, '{}_outputs'.format(test_dir_base))
     if not os.path.isdir(output_dir) :
         os.mkdir(output_dir)
 
-    dl = data_loader.DataLoader(FLAGS.data_dir, 224, -1)
+    dl = data_loader.DataLoader(FLAGS.test_dir, 224, -1)
 
     saver = tf.train.Saver(max_to_keep=100)
 
     with tf.Session() as sess :
         sess.run(tf.global_variables_initializer())
-        saver.restore(FLAGS.restore_from)
+        saver.restore(sess, FLAGS.restore_from)
         fw = tf.summary.FileWriter(logdir, graph=sess.graph)
 
         test_ix = 0
         wrap = False
         while not wrap :
 
-            inputs, wrap, filepaths = dl.next_train_batch(FLAGS.tr_nbatch)
+            inputs, wrap, filepaths = dl.next_test_batch(FLAGS.test_nbatch)
 
-            pred = sess.run(pred_op, {input_pl:inputs, target_pl:labels, kp_pl:1.0})
+            pred = sess.run(pred_op, {input_pl:inputs, kp_pl:1.0})
 
             test_img_summary = utils.create_test_img_summary(inputs, pred)
-            test_output = test_img_summary[:, :, IMAGE_SIZE:, 3]
             if test_ix % FLAGS.log_test_img_every == 0 :
                 test_img_pb = sess.run(test_img_summary_op, {img_summary_pl: test_img_summary})
                 fw.add_summary(test_img_pb, test_ix)
 
             for ix, path in enumerate(filepaths) :
-                filename = os.path.basename(path)
-                imsave(test_output[ix, :, :], os.path.join(output_dir, filename))
+                filename = os.path.basename(path).split('.')[0]
+                np.save(os.path.join(output_dir, filename), pred[ix, :, :])
 
             test_ix += 1
             fw.flush()
